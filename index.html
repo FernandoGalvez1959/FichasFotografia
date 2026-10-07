@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fichas de fotografía</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Literata:opsz,wght@7..72,400;7..72,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F1F3F2; --surface:#FFFFFF; --ink:#1D2B30; --muted:#5A6A6F; --line:#D3DAD8;
+  --accent:#1F6F78; --accent-soft:#DCEBEC; --star:#C9892B; --ok:#3B7D4A;
+  --head:"Bricolage Grotesque",system-ui,sans-serif; --body:"Literata",Georgia,serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#12191B; --surface:#1B2427; --ink:#E6ECEA; --muted:#9AABAE; --line:#2E3B3F;
+    --accent:#6BBBC3; --accent-soft:#1F3437; --star:#E3AA4E; --ok:#7CC08A;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#12191B; --surface:#1B2427; --ink:#E6ECEA; --muted:#9AABAE; --line:#2E3B3F;
+  --accent:#6BBBC3; --accent-soft:#1F3437; --star:#E3AA4E; --ok:#7CC08A;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.55;-webkit-text-size-adjust:100%}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:0 18px 48px}
+
+/* Cabecera */
+header{padding:22px 0 8px}
+h1{font-family:var(--head);font-weight:700;font-size:2.1rem;line-height:1.05;letter-spacing:-.02em;margin:0}
+.sub{color:var(--muted);margin:6px 0 0;font-size:1rem}
+
+/* Tipos de fotografía */
+.cats{display:flex;gap:8px;overflow-x:auto;padding:16px 0 4px;scrollbar-width:none}
+.cats::-webkit-scrollbar{display:none}
+.cat{flex:none;border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 16px;font-family:var(--head);font-weight:500;font-size:1rem;cursor:pointer}
+.cat[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.cat small{opacity:.65;font-size:.8em;margin-left:4px}
+
+/* Buscador y filtros */
+.search{width:100%;margin:14px 0 10px;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface)}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.chip{border:none;background:var(--accent-soft);color:var(--ink);border-radius:8px;padding:6px 12px;font-size:.95rem;cursor:pointer;font-family:var(--head)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--paper)}
+
+/* Lista */
+h2.group{font-family:var(--head);font-weight:700;font-size:1.25rem;margin:26px 0 8px}
+.item{display:flex;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:10px;padding:0;overflow:hidden;cursor:pointer}
+.item .strip{flex:none;width:14px}
+.item .txt{padding:12px 14px;flex:1;min-width:0}
+.item .t{font-family:var(--head);font-weight:500;font-size:1.1rem;line-height:1.25;display:block}
+.item .meta{display:block;color:var(--muted);font-size:.9rem;margin-top:3px}
+.item .flags{padding:12px 12px 0 0;font-size:1.1rem;white-space:nowrap}
+.fav-on{color:var(--star)} .done-on{color:var(--ok)}
+.empty{padding:40px 10px;text-align:center;color:var(--muted)}
+
+/* Ficha */
+.sheet{position:fixed;inset:0;background:var(--paper);overflow-y:auto;z-index:10;display:none;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet.open{display:block}
+.topbar{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 18px;background:var(--paper);border-bottom:1px solid var(--line)}
+.back{border:none;background:none;font-family:var(--head);font-size:1.05rem;padding:8px 4px;cursor:pointer;color:var(--accent)}
+.actions{display:flex;gap:6px}
+.act{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:.95rem;cursor:pointer;font-family:var(--head)}
+.act.on-fav{border-color:var(--star);color:var(--star)}
+.act.on-done{border-color:var(--ok);color:var(--ok)}
+.sky{height:120px;border-radius:14px;margin:18px 0 0;position:relative;display:flex;align-items:flex-end;padding:12px 14px}
+.sky span{background:rgba(255,255,255,.85);color:#1D2B30;border-radius:6px;padding:3px 10px;font-family:var(--head);font-size:.9rem}
+.sheet h2{font-family:var(--head);font-weight:700;font-size:1.75rem;line-height:1.15;letter-spacing:-.01em;margin:16px 0 4px}
+.sheet .where{color:var(--muted);margin:0 0 12px;font-size:.95rem}
+.sheet h3{font-family:var(--head);font-weight:700;font-size:1.15rem;margin:26px 0 8px}
+.sheet ul{padding-left:1.2em;margin:0} .sheet li{margin-bottom:6px}
+.seg{display:flex;border:1.5px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:10px}
+.seg button{flex:1;border:none;background:var(--surface);padding:10px 6px;cursor:pointer;font-family:var(--head);font-size:.98rem;line-height:1.2}
+.seg button small{display:block;font-size:.78rem;opacity:.7;font-family:var(--body)}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--paper)}
+table.set{width:100%;border-collapse:collapse;background:var(--surface);border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+table.set th,table.set td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;text-align:left}
+table.set tr:last-child th,table.set tr:last-child td{border-bottom:none}
+table.set th{font-family:var(--head);font-weight:500;color:var(--muted);width:40%;font-size:.95rem}
+table.set td{font-weight:600}
+.note{margin:10px 0 0;padding:10px 14px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;font-size:.98rem}
+.tip{padding:14px 16px;border-radius:12px;background:var(--surface);border:1.5px dashed var(--star)}
+textarea{width:100%;min-height:110px;border:1.5px solid var(--line);border-radius:12px;padding:12px;background:var(--surface);resize:vertical}
+.saved{color:var(--muted);font-size:.85rem;height:1.2em;margin-top:4px}
+@media (prefers-reduced-motion:no-preference){.sheet.open{animation:rise .22s ease-out}@keyframes rise{from{transform:translateY(24px);opacity:.3}to{transform:none;opacity:1}}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Fichas de fotografía</h1>
+    <p class="sub">Una ficha para cada escena: qué buscar, qué ajustes poner y qué evitar.</p>
+  </header>
+  <nav class="cats" id="cats" aria-label="Tipos de fotografía"></nav>
+  <input class="search" id="q" type="search" placeholder="Buscar escena: puerto, iglesia, lluvia…" aria-label="Buscar escena">
+  <div class="filters" id="filters"></div>
+  <main id="list"></main>
+</div>
+
+<section class="sheet" id="sheet" aria-modal="true" role="dialog">
+  <div class="topbar">
+    <button class="back" id="back">‹ Volver</button>
+    <div class="actions">
+      <button class="act" id="favBtn">☆ Favorita</button>
+      <button class="act" id="doneBtn">Hecha</button>
+    </div>
+  </div>
+  <div class="wrap" id="detail"></div>
+</section>
+
+<script>
+/* ---------- Datos ---------- */
+const CATS=[
+  {id:"viaje",name:"Viaje"},
+  {id:"retrato",name:"Retrato"},
+  {id:"nocturna",name:"Nocturna"},
+  {id:"deportiva",name:"Deportiva"}
+];
+const SITS={ciudad:"Ciudad",monumentos:"Monumentos",costa:"Costa",naturaleza:"Montaña y naturaleza",gente:"Gente y ambiente",ruta:"En ruta"};
+const LUZ={
+  amanecer:["Amanecer","linear-gradient(180deg,#B9C8E6,#F6C9A0 70%,#F2A77A)"],
+  manana:["Luz de mañana","linear-gradient(180deg,#9FCBE6,#DDEEF4 60%,#FBE7A6)"],
+  mediodia:["Mediodía, sol fuerte","linear-gradient(180deg,#7DB8E8,#E9F5FC 55%,#FFF3B8)"],
+  atardecer:["Atardecer","linear-gradient(180deg,#5B3A78,#B5476A 45%,#F4A259 85%)"],
+  azul:["Hora azul","linear-gradient(180deg,#14265A,#2F4C95 55%,#6D86C4 85%,#E8A86A)"],
+  noche:["Noche","radial-gradient(circle at 30% 70%,#F2B84B 0 3px,transparent 4px),radial-gradient(circle at 60% 60%,#F2B84B 0 2px,transparent 3px),radial-gradient(circle at 80% 75%,#F7D27A 0 3px,transparent 4px),linear-gradient(180deg,#070B1F,#1C2150 80%)"],
+  interior:["Interior, poca luz","linear-gradient(180deg,#3C2B1E,#8A6A4A 55%,#D9B98A)"],
+  nublado:["Cielo nublado","linear-gradient(180deg,#8E989F,#BCC4C9 55%,#DDE1E3)"]
+};
+/* m = móvil (Galaxy S24 Ultra, modo Pro): objetivo, ISO, velocidad, EV, balance de blancos, enfoque, nota
+   c = cámara (Sony a6600): modo, focal, diafragma, velocidad, ISO, enfoque, nota */
+const F=[
+{id:"calle-mediodia",cat:"viaje",sit:"ciudad",luz:"mediodia",t:"Callejuela del casco antiguo a mediodía",
+ d:"El sol cae casi vertical: sombras duras y un contraste fuerte entre las fachadas iluminadas y la calle en sombra.",
+ b:["Una franja de luz que entra en la calle","Fachadas de colores, macetas, ropa tendida","Alguien que cruce justo por la zona iluminada"],
+ m:["1x o 0,6x","50","Automática (≈1/500)","−0,3 a −0,7","Soleado (5200 K)","Automático","Toca la pantalla sobre la zona iluminada para medir ahí y no quemar las paredes."],
+ c:["A (prioridad de diafragma)","16–24 mm","f/8","Automática (≈1/500)","100","AF-S, zona","Compensación −0,7. Activa la cebra (100) para ver qué partes se queman."],
+ co:["Usa la calle como una línea que lleva la vista hacia el fondo","Encuadra en vertical: las calles estrechas lo agradecen","Espera a que una persona entre en la luz y dispara"],
+ e:["Medir en la sombra y quemar el cielo y las paredes","Dejar una franja de cielo blanco arriba: mejor cortarla"],
+ tr:"Si el contraste es excesivo, prueba en blanco y negro: la luz dura es su terreno."},
+
+{id:"plaza-movimiento",cat:"viaje",sit:"ciudad",luz:"manana",t:"Plaza con gente paseando",
+ d:"La plaza nítida y la gente convertida en ligeras estelas: transmite la vida del lugar sin que nadie sea reconocible.",
+ b:["Un elemento fijo que haga de protagonista: fuente, estatua, quiosco","Gente cruzando en varias direcciones","Un punto de apoyo: banco, farola, muro"],
+ m:["1x","50","1/8 a 1/4 s, apoyado","0","Automático","Manual, sobre el edificio","Apoya el móvil y usa el temporizador de 2 s. Con mucho sol la foto se aclara demasiado: hazla a primera o última hora."],
+ c:["S (prioridad de velocidad)","18–35 mm","f/11 (automático)","1/4 s","100","AF-S sobre la fachada","Estabilizador activado y cuerpo apoyado. Con un filtro ND de 3 pasos puedes hacerlo a pleno sol."],
+ co:["Coloca el elemento fijo en un tercio del encuadre","Deja que la gente pase entre la cámara y el protagonista"],
+ e:["Velocidad de más de 1 s sin trípode: todo sale movido","Gente pasando pegada a la cámara: manchas enormes"],
+ tr:"Dispara una ráfaga de 10–15 fotos seguidas: alguna saldrá con el fondo perfectamente nítido."},
+
+{id:"ciudad-hora-azul",cat:"viaje",sit:"ciudad",luz:"azul",t:"Vista de la ciudad en la hora azul",
+ d:"Entre 20 y 40 minutos después de la puesta de sol, el cielo queda azul intenso y se equilibra con las luces ya encendidas.",
+ b:["Un mirador con la ciudad a tus pies","Agua que refleje las luces: río, puerto, estanque","Monumentos iluminados"],
+ m:["1x o 3x","50–100","2 a 10 s con trípode","—","4000–4500 K","Manual, a infinito","Temporizador de 2 s. Sin trípode, usa el modo Foto normal: activa solo el modo Noche."],
+ c:["A (prioridad de diafragma)","18–50 mm","f/8","Automática (1–15 s)","100","Manual, con lupa sobre una luz lejana","Trípode y temporizador de 2 s. Desactiva el estabilizador cuando la cámara está sobre trípode."],
+ co:["Incluye agua o un reflejo si puedes","Horizonte recto: activa la cuadrícula","Deja un buen trozo de cielo: es el protagonista del color"],
+ e:["Esperar demasiado: el cielo se vuelve negro","Balance automático que deja la foto naranja"],
+ tr:"Llega con la puesta de sol y dispara cada 5 minutos. El mejor momento suele ser más tarde de lo que parece."},
+
+{id:"reflejos-lluvia",cat:"viaje",sit:"ciudad",luz:"nublado",t:"Reflejos en charcos tras la lluvia",
+ d:"Los charcos se convierten en espejos que doblan la ciudad. Hace falta bajar la cámara casi al suelo.",
+ b:["Charcos que reflejen algo reconocible: torre, farola, letrero","Adoquines mojados que brillen","Gente con paraguas"],
+ m:["0,6x o 1x, a ras de suelo","Automático (máx. 400)","1/125","−0,3","Nublado","Manual, sobre el reflejo","Gira el móvil boca abajo: el objetivo queda casi pegado al agua."],
+ c:["A (prioridad de diafragma)","16–24 mm","f/8","1/125 o más rápida","Automático","AF-S sobre el reflejo","La pantalla abatible te deja disparar a ras de suelo sin tumbarte."],
+ co:["Deja que el reflejo ocupe más de la mitad del encuadre","Prueba a girar la foto 180°: a veces queda más misteriosa"],
+ e:["Disparar de pie: desde arriba el charco no refleja nada","Enfocar el fondo del charco en vez del reflejo"],
+ tr:"El mejor momento es justo cuando se encienden las farolas y el suelo sigue mojado."},
+
+{id:"fachada-alta",cat:"viaje",sit:"monumentos",luz:"manana",t:"Fachada de catedral o edificio alto",
+ d:"Para que quepa entero hay que usar gran angular, y ahí aparece el problema: las verticales se inclinan y el edificio parece caerse hacia atrás.",
+ b:["Sol lateral sobre la fachada: marca los relieves","Un punto lejano desde el que entre completa","Algo de la plaza para el primer plano"],
+ m:["0,6x","50","Automática","−0,3","Soleado","Automático","Sujeta el móvil recto, sin inclinarlo hacia arriba. Luego endereza con «Perspectiva» en el editor de la Galería."],
+ c:["A (prioridad de diafragma)","10–18 mm (lo más angular)","f/8","Automática","100","AF-S","Corrige las verticales después con Snapseed o Lightroom (herramienta Perspectiva)."],
+ co:["Aléjate todo lo que puedas antes de abrir el angular","Deja margen alrededor: al corregir la perspectiva se pierden los bordes"],
+ e:["Inclinar la cámara hacia arriba","Cortar la cruz, la veleta o el pináculo"],
+ tr:"Mira hacia dónde da la fachada: si es a poniente, la mejor luz será por la tarde."},
+
+{id:"interior-iglesia",cat:"viaje",sit:"monumentos",luz:"interior",t:"Interior de iglesia o museo con poca luz",
+ d:"Poca luz, ventanas muy brillantes y casi siempre prohibido el flash y el trípode. Toca apoyarse y afinar.",
+ b:["La simetría de la nave desde el centro del pasillo","Luz de las vidrieras cayendo sobre la piedra","Retablos, techos, capiteles"],
+ m:["0,6x o 1x","400–800","1/15, apoyado","0","3500–4200 K o automático","Automático","Aquí el modo Foto normal, con su procesado nocturno, suele ganar al Pro. Haz una de cada y compara."],
+ c:["A (prioridad de diafragma)","16–24 mm","La más abierta de tu objetivo (f/3.5–4)","1/15 o más lenta, con estabilizador","Automático hasta 6400","AF-S","Dispara en RAW para rescatar sombras y vidrieras."],
+ co:["Colócate en el eje del pasillo central para una simetría perfecta","Si el tema es una vidriera, mide sobre ella"],
+ e:["Usar flash: aplana todo y suele estar prohibido","Ventanas quemadas por medir en la zona oscura"],
+ tr:"Usa el temporizador de 2 s aunque sujetes con la mano apoyada en un banco o columna: evitas el temblor al pulsar."},
+
+{id:"monumento-sin-gente",cat:"viaje",sit:"monumentos",luz:"amanecer",t:"Monumento famoso sin turistas",
+ d:"La única receta fiable es madrugar: a la salida del sol no hay autocares y la luz es la mejor del día.",
+ b:["Un encuadre distinto al de la postal","Luz rasante que dore la piedra","Una persona pequeña para dar escala (si quieres)"],
+ m:["1x","50","Automática","0","Automático","Automático","Si alguien se cuela, el Borrador de objetos del editor de la Galería lo quita bien cuando es pequeño."],
+ c:["A (prioridad de diafragma)","16–35 mm","f/8","Automática","100","AF-S","Con trípode puedes hacer 15 fotos seguidas y combinarlas en el ordenador para borrar a la gente que se mueve."],
+ co:["Busca un marco natural: un arco, una rama, una puerta","Prueba desde muy abajo o desde muy lejos"],
+ e:["Llegar a media mañana","Repetir la foto que ya tiene todo el mundo"],
+ tr:"Consulta la hora de salida del sol la víspera y llega 20 minutos antes."},
+
+{id:"detalle-arquitectura",cat:"viaje",sit:"monumentos",luz:"nublado",t:"Detalle: gárgola, puerta, azulejo",
+ d:"Los detalles cuentan el lugar tanto como la vista general. Un día nublado es perfecto: luz suave, sin sombras duras.",
+ b:["Texturas: piedra, madera, hierro, cerámica","Repeticiones y patrones","Aldabas, rótulos antiguos, números de portal"],
+ m:["3x o 5x","50–200","1/250 o más rápida","0","Nublado","Automático","El 3x y el 5x son ópticos: úsalos sin miedo. Por encima de 10x la calidad cae."],
+ c:["A (prioridad de diafragma)","70–135 mm","f/5.6–8","1/250 o más rápida","Automático","AF-S, punto flexible","Con zoom largo, un pulso firme importa: apoya los codos."],
+ co:["Llena el encuadre: que no sobre nada","Busca un fondo limpio o desenfocado"],
+ e:["Acercarte con gran angular: deforma el detalle","Sombras duras que tapan la textura"],
+ tr:"Haz una serie de 6–9 detalles del mismo lugar: juntos en mosaico cuentan el viaje."},
+
+{id:"puerto-atardecer",cat:"viaje",sit:"costa",luz:"atardecer",t:"Puerto con barcas al atardecer",
+ d:"Contraluz: el cielo mucho más brillante que las barcas. Hay que elegir, y casi siempre gana el cielo con barcas en silueta.",
+ b:["Mástiles y proas recortados contra el cielo","Reflejos de color en el agua","Pescadores trabajando en el muelle"],
+ m:["1x o 3x","50","Automática","−0,7 a −1","Soleado o 5500–6500 K","Automático, sobre las barcas","El balance automático «enfría» el atardecer. Fíjalo en Soleado o súbelo a 6000 K."],
+ c:["A (prioridad de diafragma)","18–70 mm","f/8","Automática","100","AF-S","Compensación −1. Balance de blancos «Sombra» para calentar el color."],
+ co:["Deja el sol en un borde o tapado por un mástil","Busca el reflejo del cielo en el agua quieta del puerto"],
+ e:["Poner el sol en el centro","Exponer para las barcas y quemar el cielo"],
+ tr:"Cuando el sol desaparece, espera 10 minutos más: muchas veces es entonces cuando el cielo se enciende de rojo."},
+
+{id:"playa-sol",cat:"viaje",sit:"costa",luz:"mediodia",t:"Playa a pleno sol",
+ d:"Arena clara, agua brillante y mucha luz. Con sol alto los colores del agua se ven mejor desde un punto elevado.",
+ b:["Colores del agua: turquesas, verdes, azules","Huellas, rocas o una sombrilla para el primer plano","Un paseo o acantilado desde el que mirar hacia abajo"],
+ m:["0,6x o 1x","50","Automática","0 a +0,3","Soleado","Automático","Limpia el objetivo: la sal y la crema solar lo emborronan todo."],
+ c:["A (prioridad de diafragma)","16–35 mm","f/8–11","Automática","100","AF-S","Compensación +0,3 a +0,7 (la arena engaña al fotómetro). Un filtro polarizador intensifica el azul y quita reflejos del agua."],
+ co:["Horizonte recto y en un tercio, nunca en el centro","Incluye algo cercano que dé profundidad"],
+ e:["Horizonte torcido","Arena en el equipo: guárdalo en una bolsa cerrada"],
+ tr:"Sube a un punto alto: desde arriba el agua transparente muestra todos sus colores."},
+
+{id:"olas",cat:"viaje",sit:"costa",luz:"nublado",t:"Olas y agua en movimiento",
+ d:"Dos maneras: congelar la ola rompiendo o convertir el agua en seda con una exposición larga.",
+ b:["Rocas donde rompa el agua","La estela blanca cuando la ola se retira","Espuma sobre la arena oscura"],
+ m:["1x","50","Congelar: 1/1000 · Seda: 1–2 s con trípode","−0,3","Nublado","Manual, sobre la roca","Para el efecto seda hace falta poca luz: día nublado, amanecer u hora azul."],
+ c:["S (prioridad de velocidad)","18–50 mm","f/11 (seda) o automático","Congelar: 1/1000 · Seda: 1–4 s","100","Congelar: AF-C · Seda: AF-S","Para seda a pleno día necesitas un filtro ND de 6 a 10 pasos."],
+ co:["Una roca en primer plano da anclaje","Dispara cuando la ola se retira: deja trazos preciosos"],
+ e:["Trípode en arena mojada: se hunde y la foto sale movida","Salpicaduras en el objetivo"],
+ tr:"Mira varias olas antes de disparar: suelen venir en series y la tercera o cuarta es la grande."},
+
+{id:"faro-acantilado",cat:"viaje",sit:"costa",luz:"nublado",t:"Faro o acantilado con cielo dramático",
+ d:"Nubes con fuerza, mar agitado y un elemento vertical que se recorta. El cielo es la mitad de la foto.",
+ b:["Nubes con volumen y claros de luz","Un camino o valla que lleve hacia el faro","El mar rompiendo abajo"],
+ m:["0,6x","50","Automática","−0,3 a −0,7","Nublado","Automático","Activa RAW (o Expert RAW) para recuperar el cielo después."],
+ c:["A (prioridad de diafragma)","10–24 mm","f/8","Automática","100","AF-S","Compensación −0,7 y horquillado de 3 fotos (±1) por si el cielo se quema."],
+ co:["Faro en un tercio, no centrado","Mucho cielo si las nubes lo merecen"],
+ e:["Acercarte demasiado al borde para encuadrar","No sujetar bien con viento fuerte"],
+ tr:"Los días de temporal dan las mejores fotos: siempre desde una distancia segura."},
+
+{id:"mirador",cat:"viaje",sit:"naturaleza",luz:"manana",t:"Vista panorámica desde un mirador",
+ d:"La tentación es meterlo todo. A veces funciona una panorámica y otras un tele que aísla un trozo del paisaje.",
+ b:["Capas de montañas que se van aclarando","Un pueblo pequeño en el valle","Nubes bajas o niebla entre las laderas"],
+ m:["Modo Panorámico, o 3x/5x","50","Automática","−0,3","Soleado","Automático","En panorámica gira despacio y sin subir ni bajar el móvil."],
+ c:["M (manual)","24–35 mm, cámara en vertical","f/8","Fija (mide una vez y no cambies)","100","Manual, a infinito","Haz varias fotos solapando un tercio y únelas luego. En M todas tienen la misma exposición."],
+ co:["Prueba el tele para aislar capas de montaña","Incluye algo cercano: una roca, la barandilla, un árbol"],
+ e:["Exposición distinta entre tomas de la panorámica","Gente moviéndose que sale duplicada"],
+ tr:"Con calima o niebla, el 3x o el 5x dan fotos de capas de montaña muy bonitas."},
+
+{id:"bosque-luz",cat:"viaje",sit:"naturaleza",luz:"manana",t:"Bosque con luz filtrada",
+ d:"Rayos de sol entre los árboles. Aparecen con humedad o niebla por la mañana, y desaparecen si expones para las sombras.",
+ b:["Rayos visibles entre troncos","Helechos o musgo iluminados","Un sendero que se pierda en el bosque"],
+ m:["1x","50–200","Automática","−0,7","Soleado","Automático","Toca sobre la zona más brillante para que los rayos no se pierdan."],
+ c:["A (prioridad de diafragma)","16–35 mm","f/8–11 (f/16 si quieres estrella de sol)","Automática","100–400","AF-S","Compensación −0,7. Con el sol asomando por un tronco, f/16 lo convierte en estrella."],
+ co:["Usa un tronco como marco en un lado","El sendero como línea que guía la mirada"],
+ e:["Exponer para la sombra: todo blanco","Mirar al sol directo por el visor"],
+ tr:"Madruga después de una noche húmeda: la niebla hace visibles los rayos."},
+
+{id:"cascada",cat:"viaje",sit:"naturaleza",luz:"nublado",t:"Cascada o río",
+ d:"El agua sedosa es el clásico, pero un término medio suele quedar mejor: suave pero con textura.",
+ b:["Rocas con musgo en primer plano","La caída completa con vegetación alrededor","Pequeños saltos de agua en el río"],
+ m:["0,6x o 1x","50","1/2 a 1 s con trípode","−0,3","Nublado","Manual, sobre las rocas","Temporizador de 2 s. Un día nublado evita zonas quemadas en el agua."],
+ c:["S o M","16–35 mm","f/11","0,5 a 2 s","100","AF-S","Un polarizador quita brillos de las rocas mojadas y resta algo de luz."],
+ co:["Busca un primer plano con rocas o musgo","Dispara desde abajo para que la caída parezca más alta"],
+ e:["Rocas mojadas: resbalan","Gotas en el objetivo: límpialo antes de cada foto"],
+ tr:"Medio segundo suele ser mejor que cinco: el agua conserva algo de textura."},
+
+{id:"mercado",cat:"viaje",sit:"gente",luz:"interior",t:"Mercado local",
+ d:"Color, producto y gente trabajando. Mezcla luces (toldos, fluorescentes, calle) que confunden al balance de blancos.",
+ b:["Pirámides de fruta, especias, pescado","Manos del vendedor pesando o cortando","Letreros escritos a mano"],
+ m:["1x o 3x","Automático","1/125 o más rápida","0","Automático","Automático","Bajo toldos de colores la foto se tiñe: corrígelo luego en el editor."],
+ c:["A (prioridad de diafragma)","18–50 mm","f/4","1/250 o más rápida","Automático","AF-C con seguimiento","Activa el obturador silencioso: pasas mucho más desapercibido."],
+ co:["Combina fotos generales con detalles de producto","Acércate: el color gana llenando el encuadre"],
+ e:["Fotografiar a alguien que no quiere","Contraluz de la calle al fondo del puesto"],
+ tr:"Compra algo antes de fotografiar: el vendedor te lo agradecerá y posará con gusto."},
+
+{id:"retrato-lugareno",cat:"viaje",sit:"gente",luz:"manana",t:"Retrato de una persona del lugar",
+ d:"Un retrato con contexto: su oficio, su calle, su tienda. Siempre con permiso.",
+ b:["Rostros con carácter","Oficios tradicionales","Una puerta o pared de fondo con color"],
+ m:["Modo Retrato, o 3x","Automático","1/250","0","Automático","Automático sobre los ojos","El 3x favorece la cara: no deforma nariz ni frente."],
+ c:["A (prioridad de diafragma)","50–100 mm","La más abierta (f/4–5.6)","1/250","Automático","AF-C con Eye AF","El Eye AF de la a6600 clava el enfoque en el ojo aunque la persona se mueva."],
+ co:["Ojos a la altura del tercio superior","Sitúa a la persona a la sombra y con fondo iluminado"],
+ e:["Disparar sin pedir permiso","Una farola o poste saliendo de la cabeza"],
+ tr:"Enséñale la foto en la pantalla: abre muchas puertas y a menudo sale una segunda más natural."},
+
+{id:"comida",cat:"viaje",sit:"gente",luz:"interior",t:"Plato en la mesa",
+ d:"La gastronomía también es el viaje. Luz de ventana, sin flash y rapidez antes de que se enfríe.",
+ b:["Mesa junto a una ventana","Platos típicos del lugar","Manos sirviendo o brindando"],
+ m:["1x (3x para platos altos)","Lo más bajo posible","1/60 o más rápida","−0,3","Automático","Automático","El modo Comida de la cámara desenfoca los bordes y resalta el plato."],
+ c:["A (prioridad de diafragma)","35–50 mm","f/2.8–4","1/60 o más rápida","Automático","AF-S","Luz lateral de ventana: la mejor para dar volumen."],
+ co:["Cenital (desde arriba) para platos planos y mesas llenas","Desde 45° para postres, bocadillos o platos altos"],
+ e:["Flash: la comida parece de plástico","Tu propia sombra encima del plato"],
+ tr:"Dispara antes de empezar y rápido: la comida recién servida brilla."},
+
+{id:"ventanilla-tren",cat:"viaje",sit:"ruta",luz:"manana",t:"Desde la ventanilla del tren o del coche",
+ d:"El paisaje pasa rápido. Lo lejano sale nítido; lo cercano, borroso. Se puede aprovechar.",
+ b:["Pueblos o castillos a lo lejos","Curvas del tren que dejen ver los vagones","Campos con líneas y colores"],
+ m:["1x","Automático","1/1000 o más rápida","0","Automático","Manual, a infinito","Pega el objetivo al cristal (con un pañuelo en medio) para evitar reflejos."],
+ c:["S (prioridad de velocidad)","18–70 mm","Automático","1/1000–1/2000","Automático","AF-C, zona","Enfoca a lo lejos para que el cristal sucio no atraiga el enfoque."],
+ co:["Deja que lo cercano salga movido: da sensación de velocidad","Anticípate: busca el tema antes de que llegue"],
+ e:["Reflejos del interior en el cristal","Enfocar las manchas de la ventanilla"],
+ tr:"Siéntate en el lado donde no da el sol: menos reflejos y mejor luz sobre el paisaje."},
+
+{id:"avion",cat:"viaje",sit:"ruta",luz:"manana",t:"Por la ventanilla del avión",
+ d:"Nubes, costas y ciudades desde arriba. Los mejores momentos son el despegue y el aterrizaje.",
+ b:["El ala como referencia","Costas, ríos y campos formando dibujos","Mar de nubes al amanecer"],
+ m:["1x","50","1/500 o más rápida","−0,3","Soleado","Manual, a infinito","Móvil casi pegado al cristal y ligeramente inclinado para evitar reflejos."],
+ c:["A (prioridad de diafragma)","18–50 mm","f/5.6–8","1/500 o más rápida","Automático","AF-S a infinito","No uses polarizador: con el plástico de la ventanilla salen manchas de arcoíris."],
+ co:["Incluye un trozo de ala para dar contexto","Busca patrones: campos, meandros, carreteras"],
+ e:["Enfocar el cristal rayado","Apoyar la cámara en el cristal: transmite vibraciones"],
+ tr:"Al reservar, elige ventanilla delante del ala y en el lado contrario al sol."},
+
+{id:"fiesta-noche",cat:"viaje",sit:"gente",luz:"noche",t:"Fiesta popular o procesión de noche",
+ d:"Luz escasa, gente en movimiento y mucha atmósfera. Aquí manda la velocidad para no mover a las personas.",
+ b:["Velas, farolillos, antorchas como fuente de luz","Caras iluminadas por esa luz","Fachadas del recorrido de fondo"],
+ m:["1x","800–1600","1/60 (gente caminando)","−0,3","Automático o 3200 K","Automático","Si queda muy oscuro, el modo Foto normal activa solo el modo Noche."],
+ c:["A (prioridad de diafragma)","18–50 mm","La más abierta (f/3.5–4)","1/125 o más rápida","Automático hasta 6400","AF-C","Con objetivo luminoso (f/1.8) todo mejora mucho."],
+ co:["Deja que las luces del evento sean las protagonistas","Sitúate donde la procesión gira: la ves de frente y de lado"],
+ e:["Flash: rompe la atmósfera y suele estar prohibido","Velocidad lenta: caras movidas"],
+ tr:"Llega pronto y elige sitio en una curva del recorrido, algo elevado si puedes."}
+];
+
+
+/* k = cámara Canon EOS 2000D (réflex, objetivo de kit 18–55 mm) */
+const K={
+"calle-mediodia":["Av (prioridad de diafragma)","18–24 mm","f/8","Automática (≈1/500)","100","One Shot, punto central","Compensación −2/3. Mira el histograma al revisar la foto: si toca el borde derecho, oscurece un poco más."],
+"plaza-movimiento":["Tv (prioridad de velocidad)","18–35 mm","Automático","1/4 s","100","One Shot sobre la fachada","El cuerpo no lleva estabilizador: apoya la cámara sí o sí. Con sol fuerte necesitarás un filtro ND de 58 mm."],
+"ciudad-hora-azul":["Av (prioridad de diafragma)","18–55 mm","f/8","Automática (1–30 s)","100","Manual (MF), con Live View ampliado ×10 sobre una luz lejana","Trípode y autodisparador de 2 s. Si tu objetivo tiene IS, apágalo sobre trípode."],
+"reflejos-lluvia":["Av (prioridad de diafragma)","18–24 mm","f/8","1/125 o más rápida","Automático (máx. 1600)","One Shot, en Live View","La pantalla no se abate: apoya la cámara en la mochila a ras de suelo y encuadra con Live View."],
+"fachada-alta":["Av (prioridad de diafragma)","18 mm","f/8","Automática","100","One Shot","18 mm abarca menos que el 0,6x del móvil: tendrás que alejarte más. Corrige las verticales después."],
+"interior-iglesia":["Av (prioridad de diafragma)","18 mm","f/3.5 (la más abierta del kit)","1/15 o más lenta","Automático hasta 3200","One Shot","Sin estabilizador en el cuerpo: apóyate en un banco y usa el autodisparador de 2 s. Dispara en RAW."],
+"monumento-sin-gente":["Av (prioridad de diafragma)","18–35 mm","f/8","Automática","100","One Shot","Estilo de imagen «Paisaje» para más color y nitidez."],
+"detalle-arquitectura":["Av (prioridad de diafragma)","55 mm (o 75–300 mm si lo tienes)","f/8","1/250 o más rápida","Automático","One Shot, eligiendo el punto de enfoque","Con el 18–55 tendrás que acercarte más. Con 24 megapíxeles, recortar después también vale."],
+"puerto-atardecer":["Av (prioridad de diafragma)","18–55 mm","f/8","Automática","100","One Shot","Compensación −1. Balance de blancos «Sombra» o «Nublado» para calentar el color."],
+"playa-sol":["Av (prioridad de diafragma)","18–35 mm","f/8–11","Automática","100","One Shot","Compensación +1/3 a +2/3. Estilo «Paisaje» y, si tienes, polarizador de 58 mm (la rosca del 18–55)."],
+"olas":["Tv (prioridad de velocidad)","18–55 mm","f/11 (seda) o automático","Congelar: 1/1000 · Seda: 1–4 s","100","Congelar: AI Servo · Seda: One Shot","La ráfaga es de 3 fotos por segundo: empieza a disparar un poco antes de que rompa la ola."],
+"faro-acantilado":["Av (prioridad de diafragma)","18 mm","f/8","Automática","100","One Shot","Compensación −2/3 y horquillado AEB de 3 fotos (±1)."],
+"mirador":["M (manual)","24–35 mm, cámara en vertical","f/8","Fija (mide una vez y no cambies)","100","Manual (MF), a infinito","Balance de blancos fijo en «Luz de día» para que todas las tomas tengan el mismo color."],
+"bosque-luz":["Av (prioridad de diafragma)","18–35 mm","f/8–11 (f/16 para estrella de sol)","Automática","100–400","One Shot","Compensación −2/3."],
+"cascada":["Tv o M","18–35 mm","f/11–16","0,5 a 2 s","100","One Shot","Trípode y autodisparador de 2 s."],
+"mercado":["Av (prioridad de diafragma)","18–55 mm","f/5.6","1/250 o más rápida","Automático (máx. 3200)","AI Servo, punto central","El obturador suena: dispara con naturalidad, sin esconderte."],
+"retrato-lugareno":["Av (prioridad de diafragma)","55 mm","f/5.6 (la más abierta a 55 mm)","1/250","Automático","One Shot, punto central sobre el ojo y reencuadra","Aléjate, usa 55 mm y deja el fondo lejos: así se desenfoca aunque el kit sea poco luminoso."],
+"comida":["Av (prioridad de diafragma)","35–55 mm","f/5.6","1/60 o más rápida","Automático","One Shot","El kit no enfoca muy cerca: a 55 mm sepárate unos 25 cm del plato."],
+"ventanilla-tren":["Tv (prioridad de velocidad)","18–55 mm","Automático","1/1000–1/2000","Automático","AI Servo, o MF a infinito","Acerca el parasol al cristal, sin apoyarlo, para evitar reflejos."],
+"avion":["Av (prioridad de diafragma)","18–35 mm","f/8","1/500 o más rápida","Automático","Manual (MF), a infinito","Acerca el objetivo al cristal sin tocarlo: el avión vibra."],
+"fiesta-noche":["Av (prioridad de diafragma)","18–35 mm","La más abierta (f/3.5–4.5)","1/125 o más rápida","Automático hasta 6400","AI Servo","A 6400 ya se nota el grano. Si la gente camina despacio, mejor 3200 y 1/60."]
+};
+
+/* ---------- Estado guardado ---------- */
+const KEY="fichas-foto-v1";
+let S={fav:{},done:{},notes:{},dev:"m",cat:"viaje"};
+try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r));}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+let filt="todas", q="";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function renderCats(){
+  $("cats").innerHTML=CATS.map(c=>{
+    const n=F.filter(f=>f.cat===c.id).length;
+    return `<button class="cat" aria-pressed="${S.cat===c.id}" data-c="${c.id}">${c.name}<small>${n||"pronto"}</small></button>`;
+  }).join("");
+}
+function renderFilters(){
+  const sits=[...new Set(F.filter(f=>f.cat===S.cat).map(f=>f.sit))];
+  const opts=[["todas","Todas"],...sits.map(s=>[s,SITS[s]]),["fav","★ Favoritas"],["pend","Sin hacer"]];
+  $("filters").innerHTML=sits.length?opts.map(([k,l])=>`<button class="chip" aria-pressed="${filt===k}" data-f="${k}">${l}</button>`).join(""):"";
+}
+function renderList(){
+  const cat=CATS.find(c=>c.id===S.cat);
+  let items=F.filter(f=>f.cat===S.cat);
+  if(!items.length){$("list").innerHTML=`<p class="empty">Las fichas de ${cat.name.toLowerCase()} están en preparación.</p>`;return;}
+  if(filt==="fav")items=items.filter(f=>S.fav[f.id]);
+  else if(filt==="pend")items=items.filter(f=>!S.done[f.id]);
+  else if(filt!=="todas")items=items.filter(f=>f.sit===filt);
+  if(q){const n=norm(q);items=items.filter(f=>norm(f.t+" "+f.d+" "+f.b.join(" ")+" "+SITS[f.sit]).includes(n));}
+  if(!items.length){$("list").innerHTML=`<p class="empty">Ninguna ficha coincide. Prueba con otra palabra o quita el filtro.</p>`;return;}
+  const groups={};items.forEach(f=>(groups[f.sit]=groups[f.sit]||[]).push(f));
+  $("list").innerHTML=Object.keys(SITS).filter(s=>groups[s]).map(s=>
+    `<h2 class="group">${SITS[s]}</h2>`+groups[s].map(f=>
+      `<button class="item" data-id="${f.id}"><span class="strip" style="background:${LUZ[f.luz][1]}"></span>
+       <span class="txt"><span class="t">${esc(f.t)}</span><span class="meta">${LUZ[f.luz][0]}</span></span>
+       <span class="flags">${S.fav[f.id]?'<span class="fav-on" aria-label="Favorita">★</span>':""}${S.done[f.id]?' <span class="done-on" aria-label="Hecha">✓</span>':""}</span></button>`
+    ).join("")).join("");
+}
+function norm(s){return s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"");}
+
+/* ---------- Ficha ---------- */
+let cur=null;
+function openFicha(id){
+  const f=F.find(x=>x.id===id); if(!f)return; cur=f;
+  const li=a=>`<ul>${a.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;
+  $("detail").innerHTML=`
+    <div class="sky" style="background:${LUZ[f.luz][1]}"><span>${LUZ[f.luz][0]}</span></div>
+    <h2>${esc(f.t)}</h2>
+    <p class="where">Viaje · ${SITS[f.sit]}</p>
+    <p>${esc(f.d)}</p>
+    <h3>Qué buscar</h3>${li(f.b)}
+    <h3>Ajustes</h3>
+    <div class="seg" role="group" aria-label="Equipo">
+      <button data-dev="m" aria-pressed="${S.dev==="m"}">Móvil<small>S24 Ultra · Pro</small></button>
+      <button data-dev="c" aria-pressed="${S.dev==="c"}">Sony<small>a6600</small></button>
+      <button data-dev="k" aria-pressed="${S.dev==="k"}">Canon<small>EOS 2000D</small></button>
+    </div>
+    <div id="settings"></div>
+    <h3>Composición</h3>${li(f.co)}
+    <h3>Errores habituales</h3>${li(f.e)}
+    <h3>El truco</h3><p class="tip">${esc(f.tr)}</p>
+    <h3>Mis notas</h3>
+    <textarea id="notes" placeholder="Dónde la hice, qué funcionó, qué cambiaría…">${esc(S.notes[f.id]||"")}</textarea>
+    <div class="saved" id="saved"></div>`;
+  renderSettings(); renderActs();
+  $("sheet").classList.add("open"); $("sheet").scrollTop=0; document.body.style.overflow="hidden";
+}
+function renderSettings(){
+  const f=cur, m=S.dev==="m";
+  const L=m?["Objetivo","ISO","Velocidad","Compensación (EV)","Balance de blancos","Enfoque"]
+           :["Modo","Focal","Diafragma","Velocidad","ISO","Enfoque"];
+  const v=m?f.m:(S.dev==='k'?K[f.id]:f.c);
+  $("settings").innerHTML=`<table class="set">${L.map((l,i)=>`<tr><th>${l}</th><td>${esc(v[i])}</td></tr>`).join("")}</table><p class="note">${esc(v[6])}</p>`;
+  document.querySelectorAll(".seg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.dev===S.dev));
+}
+function renderActs(){
+  const fav=!!S.fav[cur.id], done=!!S.done[cur.id];
+  $("favBtn").textContent=fav?"★ Favorita":"☆ Favorita"; $("favBtn").classList.toggle("on-fav",fav);
+  $("doneBtn").textContent=done?"✓ Hecha":"Hecha"; $("doneBtn").classList.toggle("on-done",done);
+}
+function closeFicha(){ $("sheet").classList.remove("open"); document.body.style.overflow=""; cur=null; renderList(); }
+
+/* ---------- Eventos ---------- */
+$("cats").onclick=e=>{const b=e.target.closest("[data-c]");if(!b)return;S.cat=b.dataset.c;filt="todas";save();renderCats();renderFilters();renderList();};
+$("filters").onclick=e=>{const b=e.target.closest("[data-f]");if(!b)return;filt=b.dataset.f;renderFilters();renderList();};
+$("q").oninput=e=>{q=e.target.value.trim();renderList();};
+$("list").onclick=e=>{const b=e.target.closest("[data-id]");if(b)location.hash="f="+b.dataset.id;};
+$("detail").addEventListener("click",e=>{const b=e.target.closest("[data-dev]");if(b){S.dev=b.dataset.dev;save();renderSettings();}});
+let t;
+$("detail").addEventListener("input",e=>{if(e.target.id!=="notes")return;S.notes[cur.id]=e.target.value;clearTimeout(t);t=setTimeout(()=>{save();$("saved").textContent="Nota guardada";},500);});
+$("favBtn").onclick=()=>{S.fav[cur.id]=!S.fav[cur.id];if(!S.fav[cur.id])delete S.fav[cur.id];save();renderActs();};
+$("doneBtn").onclick=()=>{S.done[cur.id]=!S.done[cur.id];if(!S.done[cur.id])delete S.done[cur.id];save();renderActs();};
+$("back").onclick=()=>{ if(location.hash)history.back(); else closeFicha(); };
+function route(){const m=location.hash.match(/f=([\w-]+)/); if(m)openFicha(m[1]); else if(cur)closeFicha();}
+window.addEventListener("hashchange",route);
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&cur)$("back").click();});
+
+renderCats();renderFilters();renderList();route();
+</script>
+</body>
+</html>
