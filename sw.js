@@ -1,4 +1,4 @@
-const CACHE = "fichas-foto-v2";
+const CACHE = "fichas-foto-v3";
 const APP = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(APP)).then(() => self.skipWaiting()));
